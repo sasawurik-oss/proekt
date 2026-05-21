@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PlantCare Tracker</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial, Helvetica, sans-serif;
+        }
+
+        body{
+            min-height:100vh;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            background:linear-gradient(135deg,#9be15d,#00e3ae);
+            padding:20px;
+        }
+
+        .container{
+            width:100%;
+            max-width:750px;
+            background:white;
+            border-radius:25px;
+            padding:35px;
+            box-shadow:0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .header{
+            text-align:center;
+            margin-bottom:30px;
+        }
+
+        .header h1{
+            font-size:42px;
+            color:#2e7d32;
+            margin-bottom:10px;
+        }
+
+        .header p{
+            color:#555;
+            font-size:18px;
+        }
+
+        .input-section{
+            display:flex;
+            gap:12px;
+            margin-bottom:30px;
+        }
+
+        .input-section input{
+            flex:1;
+            padding:15px;
+            border:2px solid #b2dfdb;
+            border-radius:14px;
+            font-size:16px;
+        }
+
+        .input-section input:focus{
+            outline:none;
+            border-color:#43a047;
+        }
+
+        #addPlantBtn{
+            padding:15px 25px;
+            border:none;
+            border-radius:14px;
+            background:#43a047;
+            color:white;
+            font-size:16px;
+            cursor:pointer;
+            font-weight:bold;
+            transition:0.3s;
+        }
+
+        #addPlantBtn:hover{
+            background:#2e7d32;
+        }
+
+        .plant-list{
+            display:flex;
+            flex-direction:column;
+            gap:18px;
+        }
+
+        .plant-card{
+            background:#f7fff7;
+            border:2px solid #dcedc8;
+            border-radius:20px;
+            padding:20px;
+        }
+
+        .plant-card h3{
+            color:#2e7d32;
+            margin-bottom:10px;
+            font-size:24px;
+        }
+
+        .plant-card p{
+            margin-bottom:15px;
+            color:#444;
+            font-size:16px;
+        }
+
+        .card-buttons{
+            display:flex;
+            gap:10px;
+        }
+
+        .water-btn,
+        .delete-btn{
+            padding:12px 18px;
+            border:none;
+            border-radius:12px;
+            color:white;
+            cursor:pointer;
+            font-weight:bold;
+        }
+
+        .water-btn{
+            background:#4caf50;
+        }
+
+        .water-btn:hover{
+            background:#388e3c;
+        }
+
+        .delete-btn{
+            background:#ef5350;
+        }
+
+        .delete-btn:hover{
+            background:#c62828;
+        }
+
+        .empty-text{
+            text-align:center;
+            color:#666;
+            margin-top:20px;
+            font-size:18px;
+        }
+
+        @media(max-width:700px){
+
+            .container{
+                padding:25px;
+            }
+
+            .header h1{
+                font-size:34px;
+            }
+
+            .input-section{
+                flex-direction:column;
+            }
+
+            #addPlantBtn{
+                width:100%;
+            }
+
+            .card-buttons{
+                flex-direction:column;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <h1>🌱 PlantCare Tracker</h1>
+            <p>Gudrs palīgs Tavu augu kopšanai</p>
+        </div>
+
+        <div class="input-section">
+
+            <input
+                type="text"
+                id="plantInput"
+                placeholder="Ievadi auga nosaukumu..."
+            >
+
+            <button id="addPlantBtn">
+                Pievienot
+            </button>
+
+        </div>
+
+        <div id="plantList" class="plant-list"></div>
+
+    </div>
+
+    <script>
+
+        const plantInput = document.getElementById("plantInput");
+        const addPlantBtn = document.getElementById("addPlantBtn");
+        const plantList = document.getElementById("plantList");
+
+        let plants = JSON.parse(localStorage.getItem("plants")) || [];
+
+        function savePlants() {
+            localStorage.setItem("plants", JSON.stringify(plants));
+        }
+
+        function renderPlants() {
+
+            plantList.innerHTML = "";
+
+            if(plants.length === 0){
+
+                plantList.innerHTML = `
+                    <p class="empty-text">
+                        🌿 Te vēl nav neviena auga
+                    </p>
+                `;
+
+                return;
+            }
+
+            plants.forEach((plant, index) => {
+
+                const plantCard = document.createElement("div");
+
+                plantCard.classList.add("plant-card");
+
+                plantCard.innerHTML = `
+                    <h3>🪴 ${plant.name}</h3>
+
+                    <p>
+                        Pēdējā laistīšana:
+                        <strong>${plant.lastWatered}</strong>
+                    </p>
+
+                    <div class="card-buttons">
+
+                        <button
+                            class="water-btn"
+                            onclick="waterPlant(${index})"
+                        >
+                            💧 Aplaistīts
+                        </button>
+
+                        <button
+                            class="delete-btn"
+                            onclick="deletePlant(${index})"
+                        >
+                            🗑 Dzēst
+                        </button>
+
+                    </div>
+                `;
+
+                plantList.appendChild(plantCard);
+            });
+        }
+
+        function addPlant(){
+
+            const plantName = plantInput.value.trim();
+
+            if(plantName === ""){
+
+                alert("Lūdzu ievadi auga nosaukumu!");
+                return;
+            }
+
+            const newPlant = {
+                name: plantName,
+                lastWatered: "Nav laistīts"
+            };
+
+            plants.push(newPlant);
+
+            savePlants();
+
+            renderPlants();
+
+            plantInput.value = "";
+        }
+
+        function waterPlant(index){
+
+            const today = new Date().toLocaleDateString("lv-LV");
+
+            plants[index].lastWatered = today;
+
+            savePlants();
+
+            renderPlants();
+        }
+
+        function deletePlant(index){
+
+            plants.splice(index, 1);
+
+            savePlants();
+
+            renderPlants();
+        }
+
+        addPlantBtn.addEventListener("click", addPlant);
+
+        renderPlants();
+
+    </script>
+
+</body>
+</html>
